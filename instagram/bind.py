@@ -123,7 +123,7 @@ def bind_method(**config):
                 headers['X-Insta-Forwarded-For'] = '|'.join([ips, signature])
 
             response = OAuth2Request(self.api).make_request(url, method=method, body=body, headers=headers)
-            if response.status_code == '503' or response.status_code == '429':
+            if response.status_code == 503 or response.status_code == 429:
                 raise InstagramAPIError(response.status_code, "Rate limited", "Your client is making too many request per second")
             try:
                 content_obj = response.json()

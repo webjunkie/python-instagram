@@ -105,7 +105,7 @@ class OAuth2AuthExchangeRequest(object):
     def get_authorize_login_url(self, scope=None):
         url = self._url_for_authorize(scope=scope)
         response = self.api.session.get(url, allow_redirects=False)
-        if response.status_code != '200':
+        if response.status_code != 200:
             raise OAuth2AuthExchangeError("The server returned a non-200 response for URL %s" % url)
         redirected_to = response.headers['content-location']
         return redirected_to
@@ -115,7 +115,7 @@ class OAuth2AuthExchangeRequest(object):
         url = self.api.access_token_url
         response = self.api.session.post(url, data=data)
         parsed_content = response.json()
-        if int(response.status_code) != 200:
+        if response.status_code != 200:
             raise OAuth2AuthExchangeError(parsed_content.get("error_message", ""))
         return parsed_content['access_token'], parsed_content['user']
 
