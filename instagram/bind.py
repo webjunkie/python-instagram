@@ -113,7 +113,7 @@ def bind_method(**config):
             if self.pagination_format == 'dict':
                 return pagination
             raise Exception('Invalid value for pagination_format: %s' % self.pagination_format)
-          
+
         def _do_api_request(self, url, method="GET", body=None, headers=None):
             headers = headers or {}
             if self.signature and self.api.client_ips != None and self.api.client_secret != None:
@@ -122,13 +122,13 @@ def bind_method(**config):
                 signature = hmac.new(secret, ips, sha256).hexdigest()
                 headers['X-Insta-Forwarded-For'] = '|'.join([ips, signature])
 
-            response, content = OAuth2Request(self.api).make_request(url, method=method, body=body, headers=headers)
-            if response['status'] == '503' or response['status'] == '429':
-                raise InstagramAPIError(response['status'], "Rate limited", "Your client is making too many request per second")
+            response = OAuth2Request(self.api).make_request(url, method=method, body=body, headers=headers)
+            if response.status_code == '503' or response.status_code == '429':
+                raise InstagramAPIError(response.status_code, "Rate limited", "Your client is making too many request per second")
             try:
-                content_obj = simplejson.loads(content)
+                content_obj = content.json()
             except ValueError:
-                raise InstagramClientError('Unable to parse response, not valid JSON.', status_code=response['status'])
+                raise InstagramClientError('Unable to parse response, not valid JSON.', status_code=response.status_code)
             # Handle OAuthRateLimitExceeded from Instagram's Nginx which uses different format to documented api responses
             if 'meta' not in content_obj:
                 if content_obj.get('code') == 420 or content_obj.get('code') == 429:

@@ -1,10 +1,10 @@
 from .json_import import simplejson
 from six.moves.urllib.parse import urlencode
-from httplib2 import Http
 from hashlib import sha256
 import mimetypes
 import six
 import hmac
+import requests
 
 
 class OAuth2AuthExchangeError(Exception):
@@ -26,6 +26,7 @@ class OAuth2API(object):
     protocol = "https"
     # override with 'Instagram', etc
     api_name = "Generic API"
+    _requests_session = None
 
     def __init__(self, client_id=None, client_secret=None, client_ips=None, access_token=None, redirect_uri=None):
         self.client_id = client_id
@@ -56,6 +57,12 @@ class OAuth2API(object):
         req = OAuth2AuthExchangeRequest(self)
         return req.exchange_for_access_token(username=username, password=password,
                                              scope=scope)
+
+    @property
+    def session(self):
+        if not self._requests_session:
+            self._requests_session = requests.Session()
+        return self._requests_session
 
 
 class OAuth2AuthExchangeRequest(object):
@@ -96,22 +103,19 @@ class OAuth2AuthExchangeRequest(object):
         return self._url_for_authorize(scope=scope)
 
     def get_authorize_login_url(self, scope=None):
-        http_object = Http(disable_ssl_certificate_validation=True)
-
         url = self._url_for_authorize(scope=scope)
-        response, content = http_object.request(url)
-        if response['status'] != '200':
+        response = self.api.session.get(url, allow_redirects=False)
+        if response.status_code != '200':
             raise OAuth2AuthExchangeError("The server returned a non-200 response for URL %s" % url)
-        redirected_to = response['content-location']
+        redirected_to = response.headers['content-location']
         return redirected_to
 
     def exchange_for_access_token(self, code=None, username=None, password=None, scope=None, user_id=None):
         data = self._data_for_exchange(code, username, password, scope=scope, user_id=user_id)
-        http_object = Http(disable_ssl_certificate_validation=True)
         url = self.api.access_token_url
-        response, content = http_object.request(url, method="POST", body=data)
-        parsed_content = simplejson.loads(content.decode())
-        if int(response['status']) != 200:
+        response = self.api.session.post(url, data=data)
+        parsed_content = response.json()
+        if int(response.status_code) != 200:
             raise OAuth2AuthExchangeError(parsed_content.get("error_message", ""))
         return parsed_content['access_token'], parsed_content['user']
 
@@ -144,7 +148,7 @@ class OAuth2Request(object):
                                   self._signed_request(path, {}, include_signed_request, include_secret))
 
     def _full_url_with_params(self, path, params, include_secret=False, include_signed_request=True):
-        return (self._full_url(path, include_secret) + 
+        return (self._full_url(path, include_secret) +
                 self._full_query_with_params(params) +
                 self._signed_request(path, params, include_signed_request, include_secret))
 
@@ -232,7 +236,4 @@ class OAuth2Request(object):
         headers = headers or {}
         if not 'User-Agent' in headers:
             headers.update({"User-Agent": "%s Python Client" % self.api.api_name})
-        # https://github.com/jcgregorio/httplib2/issues/173
-        # bug in httplib2 w/ Python 3 and disable_ssl_certificate_validation=True
-        http_obj = Http() if six.PY3 else Http(disable_ssl_certificate_validation=True)        
-        return http_obj.request(url, method, body=body, headers=headers)
+        return self.api.session.request(method, url, data=body, headers=headers)
