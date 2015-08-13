@@ -11,7 +11,7 @@ pip install python-instagram
 ```
 Requires
 -----
-  * httplib2
+  * requests
   * simplejson
   * six
 
@@ -60,10 +60,10 @@ recent_media, next_ = api.user_recent_media(user_id="userid", count=10)
 for media in recent_media:
    print media.caption.text
 ```
-       
+
 ### Making unauthenticated requests
 
-For methods that don't require authentication, you can just pass your client ID and optionally client secret into the InstagramAPI 
+For methods that don't require authentication, you can just pass your client ID and optionally client secret into the InstagramAPI
 constructor:
 
 ``` python
@@ -101,7 +101,7 @@ Along with that, you would typically register subscription "reactors" for proces
 reactor = subscriptions.SubscriptionsReactor()
 reactor.register_callback(subscriptions.SubscriptionType.USER, process_user_update)
 ```
-    
+
 See the provided sample app for an example of making a subscription, reacting to it, an processing the updates.
 
 You can also use the API to list and delete subscriptions:
@@ -110,7 +110,7 @@ You can also use the API to list and delete subscriptions:
 api.list_subscriptions()
 api.delete_subscriptions(id=342342)
 ```
-   
+
 
 Data Retrieval:
 -----
@@ -124,7 +124,7 @@ recent_media, next_ = api.user_recent_media()
 photos = []
 for media in recent_media:
     photos.append('<img src="%s"/>' % media.images['thumbnail'].url)
-```            
+```
 
 And an example of exhaustively pursuing a paginated endpoint:
 
@@ -136,15 +136,15 @@ while next_:
 ```
 
 Users: http://instagr.am/developer/endpoints/users/
-    
+
 ``` python
 api.user(user_id)
 api.user_media_feed()*
 api.user_liked_media()*
 api.user_recent_media(user_id, count, max_id)*
 api.user_search(q, count, lat, lng, min_timestamp, max_timestamp)
-```    
-   
+```
+
 Relationships: http://instagr.am/developer/endpoints/relationships/
 
 ``` python
@@ -167,7 +167,7 @@ api.media(media_id)
 api.media_popular(count, max_id)
 api.media_search(q, count, lat, lng, min_timestamp, max_timestamp)
 ```
-    
+
 Comments: http://instagr.am/developer/endpoints/comments/
 
 ``` python
@@ -175,7 +175,7 @@ api.media_comments(media_id)
 api.create_media_comment(media_id, text)
 api.delete_comment(media_id, comment_id)
 ```
-    
+
 Likes: http://instagr.am/developer/endpoints/likes/
 
 ``` python
@@ -183,15 +183,15 @@ api.media_likes(media_id)
 api.like_media(media_id)
 api.unlike_media(media_id)
 ```
-    
+
 Tags: http://instagr.am/developer/endpoints/tags/
 
 ``` python
-api.tag(tag_name) 
+api.tag(tag_name)
 api.tag_recent_media(count, max_tag_id, tag_name)*
 api.tag_search(q, count)*
 ```
- 
+
 Locations: http://instagr.am/developer/endpoints/locations/
 
 ``` python
@@ -199,7 +199,7 @@ api.location(location_id)
 api.location_recent_media(count, max_id, location_id)*
 api.location_search(q, count, lat, lng, foursquare_id, foursquare_v2_id)
 ```
-    
+
 Geographies: http://instagr.am/developer/endpoints/geographies/
 
 ``` python

@@ -126,7 +126,7 @@ def bind_method(**config):
             if response.status_code == '503' or response.status_code == '429':
                 raise InstagramAPIError(response.status_code, "Rate limited", "Your client is making too many request per second")
             try:
-                content_obj = content.json()
+                content_obj = response.json()
             except ValueError:
                 raise InstagramClientError('Unable to parse response, not valid JSON.', status_code=response.status_code)
             # Handle OAuthRateLimitExceeded from Instagram's Nginx which uses different format to documented api responses
@@ -137,8 +137,8 @@ def bind_method(**config):
                 raise InstagramAPIError(content_obj.get('code'), content_obj.get('error_type'), content_obj.get('error_message'))
             api_responses = []
             status_code = content_obj['meta']['code']
-            self.api.x_ratelimit_remaining = response.get("x-ratelimit-remaining",None)
-            self.api.x_ratelimit = response.get("x-ratelimit-limit",None)
+            self.api.x_ratelimit_remaining = response.headers.get("x-ratelimit-remaining",None)
+            self.api.x_ratelimit = response.headers.get("x-ratelimit-limit",None)
             if status_code == 200:
                 if not self.objectify_response:
                     return content_obj, None
