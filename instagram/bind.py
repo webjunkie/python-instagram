@@ -7,6 +7,7 @@ from hashlib import sha256
 import six
 from six.moves.urllib.parse import quote
 import sys
+import urlparse
 
 re_path_template = re.compile('{\w+}')
 
@@ -177,12 +178,19 @@ def bind_method(**config):
             return content, next
 
         def execute(self):
-            url, method, body, headers = OAuth2Request(self.api).prepare_request(self.method,
-                                                                                 self.path,
-                                                                                 self.parameters,
-                                                                                 include_secret=self.include_secret)
             if self.with_next_url:
-                return self._get_with_next_url(self.with_next_url, method, body, headers)
+                params = dict(urlparse.parse_qsl(urlparse.urlparse(self.with_next_url).query))
+                params.pop('sig')
+                params.pop('access_token')
+                url, method, body, headers = OAuth2Request(self.api).prepare_request(self.method,
+                                                                                     self.path,
+                                                                                     params,
+                                                                                     include_secret=self.include_secret)
+            else:
+                url, method, body, headers = OAuth2Request(self.api).prepare_request(self.method,
+                                                                                     self.path,
+                                                                                     self.parameters,
+                                                                                     include_secret=self.include_secret)
             if self.as_generator:
                 return self._paginator_with_url(url, method, body, headers)
             else:
