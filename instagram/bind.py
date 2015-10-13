@@ -180,8 +180,8 @@ def bind_method(**config):
         def execute(self):
             if self.with_next_url:
                 params = dict(urlparse.parse_qsl(urlparse.urlparse(self.with_next_url).query))
-                params.pop('sig')
-                params.pop('access_token')
+                params.pop('sig', None)
+                params.pop('access_token', None)
                 url, method, body, headers = OAuth2Request(self.api).prepare_request(self.method,
                                                                                      self.path,
                                                                                      params,
